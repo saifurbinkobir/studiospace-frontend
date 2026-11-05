@@ -24,6 +24,8 @@ export default function StudioReviews({ studioId, initialReviews, rating }) {
       rating: Number(formData.get("rating")),
       text: formData.get("text"),
       studioId,
+      userEmail: user?.email || "",
+      userName: user?.name || formData.get("name"),
     };
 
     try {
