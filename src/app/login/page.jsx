@@ -2,6 +2,7 @@
 import { authClient } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
+import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
 
 const LoginPage = () => {
@@ -57,7 +58,7 @@ return (
 </form>
 
 <div className="my-6 flex items-center gap-3 text-xs text-slate-400"><span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />OR<span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" /></div>
-<button onClick={handleGoogleSignIn} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900" type="button"><span className="font-bold text-red-500">G</span> Continue with Google</button>
+<button onClick={handleGoogleSignIn} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900" type="button"><span className="font-bold text-red-500"><FcGoogle /></span> Continue with Google</button>
 <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">Don&apos;t have an account? <Link className="font-semibold text-cyan-700 hover:text-cyan-600 dark:text-cyan-400" href="/register">Register</Link></p>
 </div>
 </main>
