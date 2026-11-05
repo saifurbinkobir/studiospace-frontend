@@ -1,3 +1,4 @@
+
 import BannerSection from "@/components/homepage/banner";
 import BrowseByCategorites from "@/components/homepage/browseByCategorites";
 import FeaturedStudios from "@/components/homepage/featured-studios";

@@ -26,8 +26,8 @@ const HostGuarantee = () => {
     <section className="bg-white px-5 py-20 dark:bg-slate-950 sm:px-8 lg:px-10">
       <div className="mx-auto grid max-w-7xl overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-900 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="relative overflow-hidden bg-cyan-700 p-8 text-white sm:p-12 dark:bg-cyan-950">
-          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border-[24px] border-cyan-500/30" />
-          <div className="absolute -bottom-20 -left-16 h-56 w-56 rounded-full border-[28px] border-cyan-400/20" />
+          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border-24 border-cyan-500/30" />
+          <div className="absolute -bottom-20 -left-16 h-56 w-56 rounded-full border-28 border-cyan-400/20" />
           <div className="relative">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-100">Host guarantee & creator support</p>
             <h2 className="mt-6 max-w-sm text-3xl font-bold leading-tight sm:text-4xl">A little more confidence goes a long way.</h2>
