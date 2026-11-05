@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toast";
 import SiteHeader from "@/components/shared_components/header";
 import SiteFooter from "@/components/shared_components/footer";
 
@@ -25,9 +26,11 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+        <Toaster>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </Toaster>
       </body>
     </html>
   );
