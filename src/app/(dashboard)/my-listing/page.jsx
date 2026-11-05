@@ -100,7 +100,7 @@ export default function MyListingPage() {
                   <p className="mt-4 text-base font-semibold text-slate-950 dark:text-white">${studio.hourlyRate} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">/ hr</span></p>
                   <div className="mt-auto grid grid-cols-3 gap-2 pt-6">
                     <Link className="rounded-full border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" href={`/studios/${studio._id}`}>View Details</Link>
-                    <button className="flex-1 rounded-full border border-cyan-600 px-4 py-2 text-sm font-semibold text-cyan-700 hover:bg-cyan-600 hover:text-white dark:border-cyan-400 dark:text-cyan-300 dark:hover:bg-cyan-400 dark:hover:text-slate-950" type="button">Update</button>
+                    <Link className="rounded-full border border-cyan-600 px-3 py-2 text-center text-sm font-semibold text-cyan-700 hover:bg-cyan-600 hover:text-white dark:border-cyan-400 dark:text-cyan-300 dark:hover:bg-cyan-400 dark:hover:text-slate-950" href={`/studios/edit/${studio._id}`}>Update</Link>
                     <button className="flex-1 rounded-full border border-red-500 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-600 hover:text-white dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white" onClick={() => setDeletingStudio(studio)} type="button">Delete</button>
                   </div>
                 </div>
