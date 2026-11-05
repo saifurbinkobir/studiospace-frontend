@@ -37,7 +37,7 @@ const BrowseByCategorites = async () => {
               className="group relative flex min-h-72 items-end overflow-hidden rounded-2xl bg-cover bg-center p-5 text-white shadow-sm transition-transform hover:-translate-y-1 hover:shadow-xl"
               href={`/studios?category=${category.category}`}
               key={category.title}
-              style={{ backgroundImage: `url(${category.imageUrl})` }}
+              style={{ backgroundImage: `url(${category.imageUrl[0]})` }}
             >
               <div className="absolute inset-0 bg-linear-to-t from-slate-950/90 via-slate-950/35 to-slate-950/5 transition-colors group-hover:from-cyan-950/90" />
               <div className="relative z-10">

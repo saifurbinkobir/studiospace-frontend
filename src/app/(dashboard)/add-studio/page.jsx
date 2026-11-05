@@ -30,6 +30,7 @@ export default function AddStudioPage() {
 
     // Handle checkboxes and numbers
     data.amenities = formData.getAll("amenities");
+    data.imageUrl = [data.imageUrl];
     data.hourlyRate = Number(data.hourlyRate);
     data.securityDeposit = Number(data.securityDeposit);
     data.capacity = Number(data.capacity);

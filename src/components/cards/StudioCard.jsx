@@ -10,7 +10,7 @@ const StudioCard = ({ studio }) => {
           className="h-56 w-full object-cover"
           height={360}
           loading="lazy"
-          src={studio.imageUrl}
+          src={studio.imageUrl[0]}
           width={600}
         />
         <div className="flex flex-1 flex-col p-5">

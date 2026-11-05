@@ -89,7 +89,7 @@ export default function MyListingPage() {
           <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {studios.map((studio) => (
               <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950" key={studio._id}>
-                <Image alt={studio.title} className="h-52 w-full object-cover" height={360} src={studio.imageUrl} width={600} />
+                <Image alt={studio.title} className="h-52 w-full object-cover" height={360} src={studio.imageUrl[0]} width={600} />
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-start justify-between gap-3">
                     <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300">{studio.category}</span>
