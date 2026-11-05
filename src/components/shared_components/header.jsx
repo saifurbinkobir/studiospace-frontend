@@ -138,7 +138,7 @@ export default function SiteHeader() {
                       </Link>
                       <Link
                         className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                        href="/my-studio-listings"
+                        href="/my-listing"
                       >
                         My Studio Listings
                       </Link>

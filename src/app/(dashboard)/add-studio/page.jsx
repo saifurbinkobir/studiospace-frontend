@@ -44,7 +44,7 @@ export default function AddStudioPage() {
 
     if (res.ok) {
       toast.add({ title: "Studio created successfully", type: "success" });
-      router.push("/my-listings");
+      router.push("/my-listing");
     } else {
       toast.add({ title: "Failed to create studio", type: "error" });
     }
