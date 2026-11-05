@@ -2,9 +2,9 @@ import Link from "next/link";
 import StudioCard from "../cards/StudioCard";
 
 const FeaturedStudios = async () => {
-  const res = await fetch("http://localhost:5000/studios/featured", {
-    cache: "no-store",
-  });
+  const res = await fetch(`${process.env.STUDIO_SPACE_BACKEND_URL}studios/featured`, {
+  cache: "no-store",
+});
   
   const featuredStudios = await res.json();
 

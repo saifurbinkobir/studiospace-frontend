@@ -1,37 +1,8 @@
 import Link from "next/link";
-
-const categories = [
-  {
-    title: "Photo Studios",
-    image:
-      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=85",
-  },
-  {
-    title: "Sound Stages",
-    image:
-      "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=900&q=85",
-  },
-  {
-    title: "Podcast Rooms",
-    image:
-      "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=900&q=85",
-  },
-  {
-    title: "Music Suites",
-    image:
-      "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?auto=format&fit=crop&w=900&q=85",
-  },
-  {
-    title: "Art Workshops",
-    image:
-      "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=900&q=85",
-  },
-];
-
 const BrowseByCategorites = async () => {
-  const res = await fetch("http://localhost:5000/studios", {
-    cache: "no-store",
-  });
+  const res = await fetch(`${process.env.STUDIO_SPACE_BACKEND_URL}studios`, {
+  cache: "no-store",
+});
   const studios = await res.json();
   const categories = studios.filter(
     (studio, index, self) =>
