@@ -19,7 +19,7 @@ export default function SiteHeader() {
   }
 
   return (
-    <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+    <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sticky top-0 z-50">
       <div className="mx-auto flex min-h-18 max-w-7xl items-center justify-between gap-6 px-5 py-4 lg:px-8">
         <Link className="flex items-center gap-2 text-xl font-bold text-slate-950 dark:text-white" href="/">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300" aria-hidden="true">◉</span>
