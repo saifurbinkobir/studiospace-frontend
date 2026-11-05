@@ -126,25 +126,25 @@ export default function SiteHeader() {
                     <div className="py-2">
                       <Link
                         className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                        href="#"
+                        href="/dashboard"
                       >
                         Dashboard
                       </Link>
                       <Link
                         className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                        href="#"
+                        href="/add-studio"
                       >
                         Add New Studio
                       </Link>
                       <Link
                         className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                        href="#"
+                        href="/my-studio-listings"
                       >
                         My Studio Listings
                       </Link>
                       <Link
                         className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                        href="#"
+                        href="/my-bookings"
                       >
                         My Bookings
                       </Link>
