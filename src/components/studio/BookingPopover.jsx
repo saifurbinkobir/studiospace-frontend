@@ -11,7 +11,9 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { toast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
 const apiUrl = process.env.NEXT_PUBLIC_SERVER_URL;
 const inputClassName = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white";
@@ -44,9 +46,13 @@ export default function BookingPopover({ studio }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-
     if (!hours) {
-      toast.add({ title: "Choose a valid booking time range", type: "error" });
+      showErrorToast("Booking failed", "Choose a valid start and end time.");
+      return;
+    }
+
+    if (!user?.email) {
+      showErrorToast("Booking requires login", "Please log in before booking a workspace.");
       return;
     }
 
@@ -66,28 +72,32 @@ export default function BookingPopover({ studio }) {
     };
 
     try {
+      const token = await getTokenFromClient();
       const response = await fetch(`${apiUrl}/studios/bookings`, {
         body: JSON.stringify(booking),
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         method: "POST",
       });
 
       if (response.status === 409) {
-        toast.add({ title: "Studio Already Booked", description: "This studio is already booked during the selected time period.", type: "error" });
+        showErrorToast("Studio already booked", "This studio is already booked during the selected time period.");
         return;
       }
 
       if (!response.ok) {
         const result = await response.json().catch(() => null);
-        throw new Error(result?.error || "Booking failed");
+        throw new Error(result?.error || "Unable to submit booking.");
       }
 
-      toast.add({ title: "Booking request submitted", description: "Your booking is pending confirmation.", type: "success" });
+      showSuccessToast("Booking request submitted", "Your booking is pending confirmation.");
       setStartDateTime("");
       setEndDateTime("");
       router.push("/my-bookings");
     } catch (error) {
-      toast.add({ title: "Booking failed", description: error.message, type: "error" });
+      showErrorToast("Booking failed", error, "Unable to submit booking.");
     } finally {
       setSubmitting(false);
     }
@@ -125,7 +135,7 @@ export default function BookingPopover({ studio }) {
             <p className="text-right text-sm font-bold text-cyan-700 dark:text-cyan-300">${total.toFixed(2)}</p>
           </div>
 
-          <button className="w-full rounded-lg bg-cyan-600 px-4 py-3 text-sm font-semibold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400" disabled={submitting} type="submit">{submitting ? "Submitting..." : "Confirm Booking"}</button>
+          <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-3 text-sm font-semibold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400" disabled={submitting} type="submit">{submitting && <Spinner />}{submitting ? "Submitting..." : "Confirm Booking"}</button>
         </form>
       </PopoverContent>
     </Popover>

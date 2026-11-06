@@ -1,50 +1,80 @@
 "use client";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
-import { toast } from "@/components/ui/toast";
-import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
+import { useEffect, useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
+
+function getSafeCallbackUrl(value) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
+
+function getCallbackUrlFromLocation() {
+  if (typeof window === "undefined") return "/";
+  return getSafeCallbackUrl(new URLSearchParams(window.location.search).get("callbackUrl"));
+}
 
 const RegisterPage = () => {
-  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
+  const [callbackUrl, setCallbackUrl] = useState("/");
 
-  const handleGoogleSignIn = () => {
-  authClient.signIn.social({
-    provider: "google",
-    callbackURL: "/",
-  });
+  useEffect(() => {
+    setCallbackUrl(getCallbackUrlFromLocation());
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+  setGooglePending(true);
+  try {
+    const result = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: getCallbackUrlFromLocation(),
+    });
+    if (result?.error) throw result.error;
+    showSuccessToast("Continuing with Google", "Redirecting you to Google sign-in.");
+  } catch (error) {
+    showErrorToast("Google sign-in failed", error, "Unable to continue with Google.");
+  } finally {
+    setGooglePending(false);
+  }
 };
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const formData = new FormData(event.target);
-    const user = Object.fromEntries(formData.entries());
-    const passValidation = !/[A-Z]/.test(user.password)
-      ? "Must contain an uppercase letter"
-      : !/[a-z]/.test(user.password)
-        ? "Must contain a lowercase letter"
-        : user.password.length < 6
-          ? "Must be at least 6 characters"
-          : "";
-    if (passValidation) {
-      toast.add({ title: passValidation, type: "error" });
-      return;
-    }
-    const { data, error } = await authClient.signUp.email({
-      name: user.name,
-      email: user.email,
-      password: user.password,
-      image: user.photoUrl,
-    });
-    if (data) {
-      toast.add({ title: "Registered successfully", type: "success" });
-      router.push("/login");
-    }
-    if (error) {
-      toast.add({
-        title: "Registration failed",
-        description: error.message,
-        type: "error",
+    setSubmitting(true);
+    try {
+      const formData = new FormData(event.currentTarget);
+      const user = Object.fromEntries(formData.entries());
+      const passValidation = !/[A-Z]/.test(user.password)
+        ? "Password must contain an uppercase letter."
+        : !/[a-z]/.test(user.password)
+          ? "Password must contain a lowercase letter."
+          : user.password.length < 6
+            ? "Password must be at least 6 characters."
+            : "";
+      if (passValidation) {
+        showErrorToast("Registration failed", passValidation);
+        return;
+      }
+
+      const { data, error } = await authClient.signUp.email({
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        image: user.photoUrl,
       });
+      if (error) {
+        showErrorToast("Registration failed", error, "Unable to create your account.");
+        return;
+      }
+      if (!data) throw new Error("Unable to create your account.");
+
+      showSuccessToast("Registration successful", "Your account has been created.");
+      window.location.replace(getCallbackUrlFromLocation());
+    } catch (error) {
+      showErrorToast("Registration failed", error, "Unable to create your account.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -128,10 +158,12 @@ const RegisterPage = () => {
             />
           </div>
           <button
-            className="w-full rounded-lg bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
+            disabled={submitting}
             type="submit"
           >
-            Register
+            {submitting && <Spinner />}
+            {submitting ? "Creating account..." : "Register"}
           </button>
         </form>
 
@@ -141,16 +173,17 @@ const RegisterPage = () => {
           <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
         </div>
         <button onClick={handleGoogleSignIn}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+          disabled={googlePending || submitting}
           type="button"
         >
-          <span className="font-bold text-red-500"><FcGoogle /></span> Continue with Google
+          {googlePending ? <Spinner /> : <span className="font-bold text-red-500"><FcGoogle /></span>} {googlePending ? "Connecting..." : "Continue with Google"}
         </button>
         <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
           Already have an account?{" "}
           <Link
             className="font-semibold text-cyan-700 hover:text-cyan-600 dark:text-cyan-400"
-            href="/login"
+            href={callbackUrl === "/" ? "/login" : `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
           >
             Login
           </Link>

@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { FaInstagram, FaXTwitter } from "react-icons/fa6";
 
 const categories = [
-  ["Photography Studios", "/studios?category=photography"],
-  ["Podcast Studios", "/studios?category=podcast"],
-  ["Film Stages", "/studios?category=film"],
-  ["Music Studios", "/studios?category=music"],
+  ["Photo Studios", "/studios?category=Photo Studios"],
+  ["Music Suites", "/studios?category=Music Suites"],
+  ["Art Workshops", "/studios?category=Art Workshops"],
+  ["Podcast Rooms", "/studios?category=Podcast Rooms"],
 ];
 
 export default function SiteFooter() {
@@ -14,12 +15,12 @@ export default function SiteFooter() {
         <div>
           <Link className="text-xl font-bold text-slate-950 dark:text-white" href="/">StudioSpace</Link>
           <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-400">Find inspiring creative spaces for your next project, from studios and stages to podcast lounges and workshops.</p>
-          <p className="mt-4 text-sm text-slate-500">Follow us: <a className="hover:text-cyan-600 dark:hover:text-cyan-400" href="https://x.com/" rel="noreferrer" target="_blank">X</a> · <a className="hover:text-cyan-600 dark:hover:text-cyan-400" href="https://www.instagram.com/" rel="noreferrer" target="_blank">Instagram</a></p>
+          <p className="mt-4 text-sm text-slate-500 flex items-center gap-1">Follow us: <a className="hover:text-cyan-600 dark:hover:text-cyan-400" href="https://x.com/" rel="noreferrer" target="_blank"><FaXTwitter /></a> · <a className="hover:text-cyan-600 dark:hover:text-cyan-400" href="https://www.instagram.com/" rel="noreferrer" target="_blank"><FaInstagram /></a></p>
         </div>
 
         <div>
           <h2 className="font-semibold text-slate-950 dark:text-white">Quick Links</h2>
-          <div className="mt-4 space-y-2 text-sm"><Link className="block hover:text-cyan-600 dark:hover:text-cyan-400" href="/">Home</Link><Link className="block hover:text-cyan-600 dark:hover:text-cyan-400" href="/studios">Explore Studios</Link><Link className="block hover:text-cyan-600 dark:hover:text-cyan-400" href="/how-it-works">How It Works</Link><Link className="block hover:text-cyan-600 dark:hover:text-cyan-400" href="/about">About Us</Link></div>
+          <div className="mt-4 space-y-2 text-sm"><Link className="block hover:text-cyan-600 dark:hover:text-cyan-400" href="/">Home</Link><Link className="block hover:text-cyan-600 dark:hover:text-cyan-400" href="/studios">Explore Studios</Link><Link className="block hover:text-cyan-600 dark:hover:text-cyan-400" href="/#how-it-works">How It Works</Link><Link className="block hover:text-cyan-600 dark:hover:text-cyan-400" href="/about">About Us</Link></div>
         </div>
 
         <div>

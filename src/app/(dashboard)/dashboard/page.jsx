@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, Building2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PageLoader } from "@/components/ui/loading-state";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
-const apiUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+const apiUrl = process.env.NEXT_PUBLIC_SERVER_URL;
 
 function getInitials(user) {
   const name = user?.name || user?.email || "U";
@@ -35,10 +37,19 @@ export default function DashboardPage() {
       }
 
       try {
+        const token = await getTokenFromClient();
         const encodedEmail = encodeURIComponent(user.email);
         const [studiosResponse, bookingsResponse] = await Promise.all([
-          fetch(`${apiUrl}/studios/my-studios?email=${encodedEmail}`),
-          fetch(`${apiUrl}/studios/bookings?email=${encodedEmail}`),
+          fetch(`${apiUrl}/studios/my-studios?email=${encodedEmail}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch(`${apiUrl}/studios/bookings?email=${encodedEmail}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
         ]);
 
         if (!studiosResponse.ok || !bookingsResponse.ok) {
@@ -78,10 +89,8 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {loading || sessionPending ? (
-          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-8 text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">Loading your dashboard...</div>
-        ) : !user ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400">Please log in to view your dashboard.</div>
+        {loading || sessionPending || !user ? (
+          <PageLoader label="Loading your dashboard..." />
         ) : error ? (
           <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-8 text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300">{error}</div>
         ) : (

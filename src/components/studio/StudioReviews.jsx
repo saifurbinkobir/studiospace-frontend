@@ -2,15 +2,20 @@
 
 import { useState } from "react";
 import ReviewCard from "@/components/cards/reviewCard";
-import { toast } from "@/components/ui/toast";
+import { authClient } from "@/lib/auth-client";
+import { Spinner } from "@/components/ui/spinner";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
-const apiUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+const apiUrl = process.env.NEXT_PUBLIC_SERVER_URL;
 const inputClassName = "w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white";
 const labelClassName = "mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
 export default function StudioReviews({ studioId, initialReviews, rating }) {
   const [reviews, setReviews] = useState(initialReviews || []);
   const [submitting, setSubmitting] = useState(false);
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -29,21 +34,26 @@ export default function StudioReviews({ studioId, initialReviews, rating }) {
     };
 
     try {
+      const token = await getTokenFromClient();
       const response = await fetch(`${apiUrl}/studios/reviews`, {
         body: JSON.stringify(review),
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         method: "POST",
       });
 
-      if (!response.ok) throw new Error("Unable to submit review");
-
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "Unable to submit review.");
+      
       const reviewsResponse = await fetch(`${apiUrl}/studios/reviews/${studioId}`);
       const updatedReviews = reviewsResponse.ok ? await reviewsResponse.json() : [...reviews, review];
       setReviews(updatedReviews);
       form.reset();
-      toast.add({ title: "Review submitted successfully", type: "success" });
+      showSuccessToast("Review submitted", "Thanks for sharing your experience.");
     } catch (error) {
-      toast.add({ title: "Review submission failed", description: error.message, type: "error" });
+      showErrorToast("Review submission failed", error, "Unable to submit your review.");
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +85,7 @@ export default function StudioReviews({ studioId, initialReviews, rating }) {
           <div><label className={labelClassName} htmlFor="review-rating">Rating (0–5)</label><input className={inputClassName} id="review-rating" max="5" min="0" name="rating" placeholder="5" required step="0.1" type="number" /></div>
           <div className="sm:col-span-2"><label className={labelClassName} htmlFor="review-text">Review</label><textarea className={`${inputClassName} min-h-32 resize-y`} id="review-text" name="text" placeholder="Share your experience" required /></div>
         </div>
-        <button className="mt-5 rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400" disabled={submitting} type="submit">{submitting ? "Submitting..." : "Submit Review"}</button>
+        <button className="mt-5 flex items-center gap-2 rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400" disabled={submitting} type="submit">{submitting && <Spinner />}{submitting ? "Submitting..." : "Submit Review"}</button>
       </form>
     </section>
   );

@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
+import { PageLoader } from "@/components/ui/loading-state";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
 const apiUrl = process.env.NEXT_PUBLIC_SERVER_URL;
 
@@ -29,7 +32,7 @@ export default function MyBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancellingId, setCancellingId] = useState(null);
-
+  
   useEffect(() => {
     if (sessionPending) return;
 
@@ -40,7 +43,12 @@ export default function MyBookingsPage() {
       }
 
       try {
-        const response = await fetch(`${apiUrl}/studios/bookings?email=${encodeURIComponent(user.email)}`);
+        const token = await getTokenFromClient();
+        const response = await fetch(`${apiUrl}/studios/bookings?email=${encodeURIComponent(user.email)}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) throw new Error("Unable to load your bookings");
         setBookings(await response.json());
       } catch (loadError) {
@@ -57,8 +65,12 @@ export default function MyBookingsPage() {
     setCancellingId(bookingId);
 
     try {
+      const token = await getTokenFromClient();
       const response = await fetch(`${apiUrl}/studios/bookings/${bookingId}`, {
         method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
@@ -66,9 +78,9 @@ export default function MyBookingsPage() {
       }
 
       setBookings((currentBookings) => currentBookings.map((booking) => booking._id === bookingId ? { ...booking, status: "Cancelled" } : booking));
-      toast.add({ title: "Booking cancelled successfully", type: "success" });
+      showSuccessToast("Booking cancelled", "Your pending booking has been cancelled.");
     } catch (cancelError) {
-      toast.add({ title: "Cancellation failed", description: cancelError.message, type: "error" });
+      showErrorToast("Booking cancellation failed", cancelError, "Unable to cancel this booking.");
     } finally {
       setCancellingId(null);
     }
@@ -83,10 +95,8 @@ export default function MyBookingsPage() {
           <p className="mt-4 text-slate-600 dark:text-slate-400">Review your upcoming and past studio reservations.</p>
         </div>
 
-        {loading || sessionPending ? (
-          <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-8 text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">Loading your bookings...</div>
-        ) : !user ? (
-          <div className="mt-10 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400">Please log in to view your bookings.</div>
+        {loading || sessionPending || !user ? (
+          <PageLoader label="Loading your bookings..." />
         ) : error ? (
           <div className="mt-10 rounded-2xl border border-red-200 bg-red-50 p-8 text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300">{error}</div>
         ) : bookings.length === 0 ? (
@@ -117,7 +127,7 @@ export default function MyBookingsPage() {
                     <div><dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Total price</dt><dd className="mt-1 text-sm font-semibold text-slate-950 dark:text-white">${Number(booking.totalPrice || 0).toFixed(2)}</dd></div>
                   </dl>
 
-                  {isPending && <div className="mt-6 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800"><button className="rounded-full border border-red-500 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white" disabled={cancellingId === booking._id} onClick={() => handleCancelBooking(booking._id)} type="button">{cancellingId === booking._id ? "Cancelling..." : "Cancel Booking"}</button></div>}
+                  {isPending && <div className="mt-6 flex justify-end border-t border-slate-200 pt-5 dark:border-slate-800"><button className="flex items-center gap-2 rounded-full border border-red-500 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white" disabled={cancellingId === booking._id} onClick={() => handleCancelBooking(booking._id)} type="button">{cancellingId === booking._id && <Spinner />}{cancellingId === booking._id ? "Cancelling..." : "Cancel Booking"}</button></div>}
                 </article>
               );
             })}

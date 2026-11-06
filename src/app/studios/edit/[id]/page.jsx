@@ -1,9 +1,11 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
+import { PageLoader } from "@/components/ui/loading-state";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
 const amenities = [
   "Wi-Fi",
@@ -22,7 +24,7 @@ const labelClassName = "mb-2 block text-sm font-medium text-slate-700 dark:text-
 export default function StudioEditPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   const user = session?.user;
   const [studio, setStudio] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,24 +32,45 @@ export default function StudioEditPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (!id || sessionPending || !user) return;
+
+    let cancelled = false;
+
     async function loadStudio() {
+      setLoading(true);
+      setError("");
+
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/studios/${id}`);
-        if (!response.ok) throw new Error("Unable to load studio details");
-        const data = await response.json();
+        const token = await getTokenFromClient();
+        if (!token) throw new Error("Your session has expired. Please sign in again.");
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/studios/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(result?.error || result?.message || "Unable to load studio details");
+        }
+
+        if (cancelled) return;
+
         setStudio({
-          ...data,
-          imageUrl: Array.isArray(data.imageUrl) ? data.imageUrl[0] : data.imageUrl,
+          ...result,
+          imageUrl: Array.isArray(result.imageUrl) ? result.imageUrl[0] : result.imageUrl,
         });
       } catch (loadError) {
-        setError(loadError.message);
+        if (!cancelled) setError(loadError.message);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
-    if (id) loadStudio();
-  }, [id]);
+    loadStudio();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, sessionPending, user?.id]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -67,24 +90,27 @@ export default function StudioEditPage() {
     };
 
     try {
+      const token = await getTokenFromClient();
       const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/studios/${id}`, {
         body: JSON.stringify(updatedData),
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "authorization": `Bearer ${token}` },
         method: "PUT",
       });
 
-      if (!response.ok) throw new Error("Unable to update studio listing");
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "Unable to update studio listing.");
 
-      toast.add({ title: "Studio updated successfully", type: "success" });
+      showSuccessToast("Studio listing updated", "Your studio changes have been saved.");
       router.push("/my-listing");
     } catch (saveError) {
-      toast.add({ title: "Update failed", description: saveError.message, type: "error" });
+      showErrorToast("Studio update failed", saveError, "Unable to update studio listing.");
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <main className="flex-1 bg-slate-50 p-8 text-slate-600 dark:bg-slate-900 dark:text-slate-400">Loading studio details...</main>;
+  if (sessionPending || !user) return <PageLoader label="Checking your StudioSpace account..." />;
+  if (loading) return <PageLoader label="Loading studio details..." />;
   if (error || !studio) return <main className="flex-1 bg-slate-50 p-8 text-red-700 dark:bg-slate-900 dark:text-red-300">{error || "Studio not found"}</main>;
 
   return (
@@ -123,7 +149,7 @@ export default function StudioEditPage() {
             </div>
           </section>
 
-          <button className="rounded-lg bg-cyan-600 px-5 py-3.5 text-sm font-semibold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400" disabled={saving} type="submit">{saving ? "Updating..." : "Update Studio"}</button>
+          <button className="flex items-center gap-2 rounded-lg bg-cyan-600 px-5 py-3.5 text-sm font-semibold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400" disabled={saving} type="submit">{saving && <Spinner />}{saving ? "Updating..." : "Update Studio"}</button>
         </form>
       </div>
     </main>

@@ -1,7 +1,11 @@
 "use client";
-import { toast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
+import { PageLoader } from "@/components/ui/loading-state";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
 const amenities = [
   "Wi-Fi",
@@ -20,34 +24,50 @@ const labelClassName =
   "mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
 export default function AddStudioPage() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   const user = session?.user;
   const router = useRouter();
+  const [saving, setSaving] = useState(false);
+
+  if (sessionPending || !user) {
+    return <PageLoader label="Checking your StudioSpace account..." />;
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const formData = new FormData(event.target);
-    const data = Object.fromEntries(formData.entries());
+    setSaving(true);
 
-    // Handle checkboxes and numbers
-    data.amenities = formData.getAll("amenities");
-    data.imageUrl = [data.imageUrl];
-    data.hourlyRate = Number(data.hourlyRate);
-    data.securityDeposit = Number(data.securityDeposit);
-    data.capacity = Number(data.capacity);
+    try {
+      const formData = new FormData(event.currentTarget);
+      const data = Object.fromEntries(formData.entries());
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/studios`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+      data.amenities = formData.getAll("amenities");
+      data.imageUrl = [data.imageUrl];
+      data.hourlyRate = Number(data.hourlyRate);
+      data.securityDeposit = Number(data.securityDeposit);
+      data.capacity = Number(data.capacity);
 
-    const result = await res.json();
+      const token = await getTokenFromClient();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/studios`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json().catch(() => null);
 
-    if (res.ok) {
-      toast.add({ title: "Studio created successfully", type: "success" });
+      if (!response.ok) {
+        throw new Error(result?.error || "Unable to create studio listing.");
+      }
+
+      showSuccessToast("Studio listing created", "Your creative space is now available.");
       router.push("/my-listing");
-    } else {
-      toast.add({ title: "Failed to create studio", type: "error" });
+    } catch (error) {
+      showErrorToast("Studio creation failed", error, "Unable to create studio listing.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -250,10 +270,12 @@ export default function AddStudioPage() {
           </section>
 
           <button
-            className="w-full rounded-lg bg-cyan-600 px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400 sm:w-auto"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400 sm:w-auto"
+            disabled={saving}
             type="submit"
           >
-            Create Studio Listing
+            {saving && <Spinner />}
+            {saving ? "Creating listing..." : "Create Studio Listing"}
           </button>
         </form>
       </div>

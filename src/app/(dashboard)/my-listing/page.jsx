@@ -12,7 +12,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
+import { PageLoader } from "@/components/ui/loading-state";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
 const apiUrl = process.env.NEXT_PUBLIC_SERVER_URL;
 
@@ -35,7 +38,12 @@ export default function MyListingPage() {
       }
 
       try {
-        const response = await fetch(`${apiUrl}/studios/my-studios?email=${encodeURIComponent(user.email)}`);
+        const token = await getTokenFromClient();
+        const response = await fetch(`${apiUrl}/studios/my-studios?email=${encodeURIComponent(user.email)}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) throw new Error("Unable to load studio listings");
         setStudios(await response.json());
       } catch (loadError) {
@@ -53,16 +61,20 @@ export default function MyListingPage() {
     setDeleting(true);
 
     try {
+      const token = await getTokenFromClient();
       const response = await fetch(`${apiUrl}/studios/${deletingStudio._id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) throw new Error("Unable to delete this studio listing");
 
       setStudios((currentStudios) => currentStudios.filter((studio) => studio._id !== deletingStudio._id));
       setDeletingStudio(null);
-      toast.add({ title: "Studio listing deleted", type: "success" });
+      showSuccessToast("Studio listing deleted", "The studio has been removed from your listings.");
     } catch (deleteError) {
-      toast.add({ title: "Delete failed", description: deleteError.message, type: "error" });
+      showErrorToast("Studio deletion failed", deleteError, "Unable to delete this studio listing.");
     } finally {
       setDeleting(false);
     }
@@ -77,10 +89,8 @@ export default function MyListingPage() {
           <p className="mt-4 text-slate-600 dark:text-slate-400">Manage the creative spaces you have shared with the StudioSpace community.</p>
         </div>
 
-        {loading || sessionPending ? (
-          <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-8 text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">Loading your studio listings...</div>
-        ) : !user ? (
-          <div className="mt-10 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400">Please log in to view your studio listings.</div>
+        {loading || sessionPending || !user ? (
+          <PageLoader label="Loading your studio listings..." />
         ) : error ? (
           <div className="mt-10 rounded-2xl border border-red-200 bg-red-50 p-8 text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300">{error}</div>
         ) : studios.length === 0 ? (
@@ -118,7 +128,7 @@ export default function MyListingPage() {
           </DialogHeader>
           <DialogFooter>
             <button className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200" onClick={() => setDeletingStudio(null)} type="button">Cancel</button>
-            <button className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700" disabled={deleting} onClick={handleDelete} type="button">{deleting ? "Deleting..." : "Delete Listing"}</button>
+            <button className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60" disabled={deleting} onClick={handleDelete} type="button">{deleting && <Spinner />}{deleting ? "Deleting..." : "Delete Listing"}</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

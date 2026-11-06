@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "../ui/toast";
+import { Spinner } from "@/components/ui/spinner";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
 
 const links = [
   ["Home", "/"],
   ["Explore Studios", "/studios"],
-  ["How It Works", "/how-it-works"],
+  ["How It Works", "/#how-it-works"],
   ["About Us", "/about"],
 ];
 
@@ -28,6 +29,7 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const [dark, setDark] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
 
@@ -40,13 +42,19 @@ export default function SiteHeader() {
     return href === "/" ? pathname === "/" : pathname.startsWith(href);
   }
 
-  function handleLogout() {
-    authClient.signOut();
-    setProfileOpen(false);
-    toast.add({
-      title: "Logged out successfully",
-      type: "success",
-    });
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      const result = await authClient.signOut();
+      if (result?.error) throw result.error;
+      setProfileOpen(false);
+      showSuccessToast("Logout successful", "You have been logged out of StudioSpace.");
+      window.location.replace("/");
+    } catch (error) {
+      showErrorToast("Logout failed", error, "Unable to log out.");
+    } finally {
+      setLoggingOut(false);
+    }
   }
 
   return (
@@ -151,10 +159,12 @@ export default function SiteHeader() {
                     </div>
                     <div className="border-t border-slate-100 pt-2 dark:border-slate-800">
                       <button onClick={handleLogout}
-                        className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-950/30"
+                        disabled={loggingOut}
                         type="button"
                       >
-                        Logout
+                        {loggingOut && <Spinner />}
+                        {loggingOut ? "Logging out..." : "Logout"}
                       </button>
                     </div>
                   </div>

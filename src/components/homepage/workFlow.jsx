@@ -23,7 +23,7 @@ const steps = [
 
 const WorkFlow = () => {
   return (
-    <section className="bg-slate-50 px-5 py-20 dark:bg-slate-900 sm:px-8 lg:px-10">
+    <section className="bg-slate-50 px-5 py-20 dark:bg-slate-900 sm:px-8 lg:px-10" id="how-it-works">
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">How it works</p>

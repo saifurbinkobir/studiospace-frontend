@@ -1,36 +1,67 @@
 "use client";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "@/components/ui/toast";
-import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
+
+function getSafeCallbackUrl(value) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
+
+function getCallbackUrlFromLocation() {
+  if (typeof window === "undefined") return "/";
+  return getSafeCallbackUrl(new URLSearchParams(window.location.search).get("callbackUrl"));
+}
 
 const LoginPage = () => {
-    const router = useRouter();
+    const [submitting, setSubmitting] = useState(false);
+    const [googlePending, setGooglePending] = useState(false);
+    const [callbackUrl, setCallbackUrl] = useState("/");
+
+    useEffect(() => {
+      setCallbackUrl(getCallbackUrlFromLocation());
+    }, []);
+
     const handleSubmit = async (event) => {
   event.preventDefault();
-  const formData = new FormData(event.target);
-  const user = Object.fromEntries(formData.entries());
+  setSubmitting(true);
 
-  const { data, error } = await authClient.signIn.email({
-    email: user.email,
-    password: user.password,
-  });
-
-  if (data) {
-    toast.add({ title: "Logged in successfully", type: "success" });
-    router.push("/");
-  }
-  if (error) {
-    toast.add({
-      title: "Login failed",
-      description: error.message,
-      type: "error",
+  try {
+    const formData = new FormData(event.currentTarget);
+    const user = Object.fromEntries(formData.entries());
+    const { data, error } = await authClient.signIn.email({
+      email: user.email,
+      password: user.password,
     });
+
+    if (error) {
+      showErrorToast("Login failed", error, "Unable to log in.");
+      return;
+    }
+
+    if (!data) throw new Error("Unable to log in.");
+
+    showSuccessToast("Login successful", "Welcome back to StudioSpace.");
+    window.location.replace(getCallbackUrlFromLocation());
+  } catch (error) {
+    showErrorToast("Login failed", error, "Unable to log in.");
+  } finally {
+    setSubmitting(false);
   }
 };
-const handleGoogleSignIn = () => {
-  authClient.signIn.social({ provider: "google", callbackURL: "/" });
+const handleGoogleSignIn = async () => {
+  setGooglePending(true);
+  try {
+    const result = await authClient.signIn.social({ provider: "google", callbackURL: getCallbackUrlFromLocation() });
+    if (result?.error) throw result.error;
+    showSuccessToast("Continuing with Google", "Redirecting you to Google sign-in.");
+  } catch (error) {
+    showErrorToast("Google sign-in failed", error, "Unable to continue with Google.");
+  } finally {
+    setGooglePending(false);
+  }
 };
     
 return (
@@ -54,12 +85,12 @@ return (
 </div>
 <input className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus:border-cyan-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" id="password" name="password" placeholder="Enter your password" required type="password" />
 </div>
-<button className="w-full rounded-lg bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400" type="submit">Login</button>
+<button className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400" disabled={submitting} type="submit">{submitting && <Spinner />} {submitting ? "Signing in..." : "Login"}</button>
 </form>
 
 <div className="my-6 flex items-center gap-3 text-xs text-slate-400"><span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />OR<span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" /></div>
-<button onClick={handleGoogleSignIn} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900" type="button"><span className="font-bold text-red-500"><FcGoogle /></span> Continue with Google</button>
-<p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">Don&apos;t have an account? <Link className="font-semibold text-cyan-700 hover:text-cyan-600 dark:text-cyan-400" href="/register">Register</Link></p>
+<button onClick={handleGoogleSignIn} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900" disabled={googlePending || submitting} type="button">{googlePending ? <Spinner /> : <span className="font-bold text-red-500"><FcGoogle /></span>} {googlePending ? "Connecting..." : "Continue with Google"}</button>
+<p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">Don&apos;t have an account? <Link className="font-semibold text-cyan-700 hover:text-cyan-600 dark:text-cyan-400" href={callbackUrl === "/" ? "/register" : `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}>Register</Link></p>
 </div>
 </main>
 );

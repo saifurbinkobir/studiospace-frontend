@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Spinner } from "@/components/ui/spinner";
+import { showErrorToast, showSuccessToast } from "@/lib/feedback";
 
 const navigation = [
   ["Dashboard", "/dashboard"],
@@ -26,6 +29,21 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      const result = await authClient.signOut();
+      if (result?.error) throw result.error;
+      showSuccessToast("Logout successful", "You have been logged out of StudioSpace.");
+      window.location.replace("/");
+    } catch (error) {
+      showErrorToast("Logout failed", error, "Unable to log out.");
+    } finally {
+      setLoggingOut(false);
+    }
+  }
 
   return (
     <div className="flex flex-1 bg-slate-50 dark:bg-slate-900">
@@ -71,10 +89,13 @@ export default function DashboardLayout({ children }) {
           </nav>
 
           <button
-            className="mt-6 w-full rounded-lg px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 lg:mt-8"
+            className="mt-6 flex w-full items-center gap-2 rounded-lg px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-950/30 lg:mt-8"
+            disabled={loggingOut}
+            onClick={handleLogout}
             type="button"
           >
-            Logout
+            {loggingOut && <Spinner />}
+            {loggingOut ? "Logging out..." : "Logout"}
           </button>
         </div>
       </aside>
